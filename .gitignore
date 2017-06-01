@@ -1,0 +1,4 @@
+# Project related files #
+.idea/*
+*out/*
+Tribe.iml

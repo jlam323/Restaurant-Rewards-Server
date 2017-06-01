@@ -1,16 +1,14 @@
-/**
- * Created by 100628824 on 6/1/2017.
- */
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Dbtest {
 
-    public static void connect() {
+    private static void connect() {
         Connection conn = null;
         try {
-            String url = "jdbc:sqlite:C:/sqlite/db/TRYBE.DB";
+            String dbLocation = "sqlite/db/TRYBE.DB";
+            String url = "jdbc:sqlite:" + dbLocation;
             conn = DriverManager.getConnection(url);
 
             System.out.println("Connection to SQLITE db is successful");
