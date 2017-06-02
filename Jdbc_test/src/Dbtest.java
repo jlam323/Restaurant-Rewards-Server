@@ -11,6 +11,7 @@ public class Dbtest {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
+
         /* TEST TO ADD USER*/
         int userID;
         System.out.println("Enter user ID");
@@ -22,11 +23,18 @@ public class Dbtest {
         userID = Integer.parseInt(br.readLine());
 
         findUser(conn, userID);
+        /* END TEST */
+
+
 
         // Close the connection
         disconnect(conn);
     }
 
+
+    /************************************************************
+     *             DATABASE CONNECTION FUNCTIONS
+     ************************************************************/
 
     /**
      *  Establishes a connection to the local SQLite database
@@ -73,6 +81,11 @@ public class Dbtest {
     }
 
 
+    /************************************************************
+     *           USER RELATED DATABASE FUNCTIONS
+     ************************************************************/
+
+
     /**
      *  Find a user in the database.
      *
@@ -102,10 +115,10 @@ public class Dbtest {
                 String queryResult = rs.getString("NAMEID");
 
                 // DEBUG
-                System.out.println("Query result: " + queryResult);
+                //System.out.println("Query result: " + queryResult);
 
                 // Record whether or not the user is already in the database
-                if (!queryResult.equals(ID)){
+                if (!queryResult.equals(ID + "")){
                     System.out.println("User " + ID + " exists in the database already.");
                     userExists = true;
                 }
@@ -166,6 +179,104 @@ public class Dbtest {
         }
 
         // Successfully added the user
+        return 0;
+    }
+
+
+
+    /************************************************************
+     *           RESTAURANT RELATED DATABASE FUNCTIONS
+     ************************************************************/
+
+    /**
+     *  Find a restaurant in the database.
+     *
+     *  @param conn connection object
+     *  @param ID ID of the new restaurant
+     */
+    public static boolean findRestaurant(Connection conn, int ID) {
+
+        boolean restaurantExists = false;
+
+        // SQL statement
+        String sql = "SELECT * FROM RESTAURANT WHERE RESTID = ?";
+
+        // Create prepared statement
+        try (PreparedStatement ps = conn.prepareStatement(sql))
+        {
+            // Insert values for the restaurant
+            ps.setInt(1, ID);
+
+            // Execute the query
+            ResultSet rs = ps.executeQuery();
+
+            // Read the result of the query
+            if (rs.next()) {
+
+                // Read the RESTID column of the query result
+                String queryResult = rs.getString("RESTID");
+
+                // Record whether or not the restaurant is already in the database
+                if (!queryResult.equals(ID + "")){
+                    System.out.println("Restaurant " + ID + " exists in the database already.");
+                    restaurantExists = true;
+                }
+            }
+            else {
+                System.out.println("Restaurant " + ID + " does not exist in the database.");
+                restaurantExists = false;
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return restaurantExists;
+    }
+
+
+    /**
+     *  Add a new restaurant to the database.
+     *
+     *  @param conn connection object
+     *  @param ID ID of the new restaurant
+     *  @param name restaurant's name
+     *  @param rewardsID ID of the restaurant's rewards list
+     */
+    public static int addRestaurant(Connection conn, int ID, String name, int rewardsID) {
+
+        // Check if the restaurant exists before adding
+        boolean restaurantExists;
+        restaurantExists = findRestaurant(conn, ID);
+
+        if (restaurantExists) {
+            System.out.println("Found restaurant: " + ID + " - " + name + ".");
+            System.out.println("Unable to add restaurant.");
+            // Unsuccessful in adding restaurant because they already exist
+            return 1;
+        }
+
+
+        // SQL statement
+        String sql = "INSERT INTO RESTAURANT(RESTID, RESTNAME, REWARDSID) VALUES(?,?,?)";
+
+        // Create prepared statement
+        try (PreparedStatement ps = conn.prepareStatement(sql))
+        {
+            // Insert values for the user
+            ps.setInt(1, ID);
+            ps.setString(2, name);
+            ps.setInt(3, rewardsID);
+
+            // Execute the prepared statement
+            ps.executeUpdate();
+
+            System.out.println("Successfully added restaurant: " + ID + " - " + name + ".");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        // Successfully added the restaurant
         return 0;
     }
 }
