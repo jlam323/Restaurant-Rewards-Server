@@ -1,5 +1,6 @@
 import java.io.*;
 import java.sql.*;
+import java.util.*;
 
 public class Dbtest {
 
@@ -233,6 +234,52 @@ public class Dbtest {
         }
     }
 
+    /**
+     *  Subtracts points from a given user's account at a given restaurant from a reward redemption.
+     *
+     *  @param conn connection object
+     *  @param userID ID of the user
+     *  @param restID ID of the restaurant
+     *  @param points number of points to be subtracted from the account
+     *  @return 0 if successfully subtracted points to the account
+     *          1 if unsuccessful - either user or restaurant ID not found
+     */
+    public static int redeemReward(Connection conn, int userID, int restID, int points) {
+
+        boolean userExists;
+        boolean restaurantExists;
+
+        userExists = findUser(conn, userID);
+        restaurantExists = findRestaurant(conn, restID);
+
+        if (userExists && restaurantExists){
+
+            // SQL statement
+            String sql = "UPDATE POINTS SET POINT = POINT - ? WHERE NAMEID = ? AND RESTID = ?";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql))
+            {
+                // Insert values into the prepared statement
+                ps.setInt(1, points);
+                ps.setInt(2, userID);
+                ps.setInt(3, restID);
+
+                // Execute the query
+                ps.executeUpdate();
+
+                System.out.println("Successfully redeemed. Subtracted " + points + " points to user " + userID + " in restaurant " + restID + ".");
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
 
 
     /************************************************************
@@ -384,6 +431,59 @@ public class Dbtest {
             }
         }
         return foodPoint;
+    }
+
+    /**
+     *  Gets all the rewards that can be redeemed by points at a particular restaurant.
+     *
+     *  @param conn connection object
+     *  @param restID ID of the new restaurant
+     *  @return rewards A map of integer point values to the reward name
+     */
+    public static Map<Integer,String> getRewards(Connection conn, int restID) {
+
+        // Check if the restaurant exists before adding
+        boolean restaurantExists;
+        restaurantExists = findRestaurant(conn, restID);
+
+        // Create map of rewards, each has a point value and description
+        Map<Integer,String> rewards = new HashMap<Integer,String>();
+
+
+        if (restaurantExists) {
+
+            // SQL statement
+            String sql = "SELECT * FROM REWARDS WHERE RESTID = ?";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql))
+            {
+                // Insert values for the restaurant
+                ps.setInt(1, restID);
+
+                // Execute the query
+                ResultSet rs = ps.executeQuery();
+
+                String rewardText;
+                Integer rewardValue;
+
+                // Read the result of the query. Max of 10 rewards
+                while (rs.next()) {
+
+                    // Read the reward text and value
+                    rewardText = rs.getString("REWARD");
+                    rewardValue = rs.getInt("REDEMPTION");
+
+                    // Add pair of reward text and value into the map
+                    rewards.put(rewardValue, rewardText);
+                }
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+
+        return rewards;
     }
 }
 
