@@ -202,38 +202,41 @@ public class Dbtest {
 
         boolean userExists;
         boolean restaurantExists;
+        boolean userPointsExists;
 
         userExists = findUser(conn, userID);
         restaurantExists = findRestaurant(conn, restID);
 
-        if (userExists && restaurantExists) {
-            boolean userrewardsExists;
-            userrewardsExists = findUserRewards(conn, restID, userID)
-            if (userrewardsExists) {
-                // SQL statement
-                String sql = "UPDATE POINTS SET POINT = POINT + ? WHERE NAMEID = ? AND RESTID = ?";
+        // Check if the user has a point counter with the restaurant
+        userPointsExists = findUserAtRestaurant(conn, restID, userID);
 
-                // Create prepared statement
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    // Insert values into the prepared statement
-                    ps.setInt(1, points);
-                    ps.setInt(2, userID);
-                    ps.setInt(3, restID);
+        if (userExists && restaurantExists && userPointsExists) {
 
-                    // Execute the query
-                    ps.executeUpdate();
+            // SQL statement
+            String sql = "UPDATE POINTS SET POINT = POINT + ? WHERE NAMEID = ? AND RESTID = ?";
 
-                    System.out.println("Successfully added " + points + " points to user " + userID + " in restaurant " + restID + ".");
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                // Insert values into the prepared statement
+                ps.setInt(1, points);
+                ps.setInt(2, userID);
+                ps.setInt(3, restID);
 
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage());
-                }
-                return 0;
-            } else {
-                return 1;
+                // Execute the query
+                ps.executeUpdate();
+
+                System.out.println("Successfully added " + points + " points to user " + userID + " in restaurant " + restID + ".");
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
             }
+            return 0;
+        } else {
+            return 1;
         }
     }
+
+
     /**
      *  Subtracts points from a given user's account at a given restaurant from a reward redemption.
      *
@@ -280,7 +283,6 @@ public class Dbtest {
         }
     }
 
-      */
 
 
     /************************************************************
@@ -334,46 +336,48 @@ public class Dbtest {
 
         return restaurantExists;
     }
+
+
     /** Find if a restaurant and user exists in rewards table
      *
      * @param conn connection object
-     * @param restid ID of the restaurant
-     * @param nameid ID of the user
+     * @param restID ID of the restaurant
+     * @param nameID ID of the user
      * @return true if combination of restid and userid exists
-     * @return false if combination of restid and userid doesnt exist
+     *         false if combination of restid and userid doesnt exist
      */
-    public static boolean findUserRewards (Connection conn, int restid, int nameid) {
-        boolean Userexists = false;
+    public static boolean findUserAtRestaurant(Connection conn, int restID, int nameID) {
+
+        boolean userExists = false;
+
         // sql statement
-        String sql = "SELECT * FROM REWARDS WHERE RESTID = ? and NAMEID = ?" ;
+        String sql = "SELECT * FROM REWARDS WHERE RESTID = ? and NAMEID = ?";
 
         // Create prepared statement
-        try (PreparedStatement ps = conn.prepareStatement(sql))
-        {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
             // Insert values for the restaurant
             ps.setInt(1, restID);
-            ps.setInt( 2,nameID);
+            ps.setInt(2, nameID);
 
             // Execute the query
             ResultSet rs = ps.executeQuery();
 
             // Read the result of the query
             if (rs.next()) {
-
-                Userexists = true;
-                }
-             else{
-                Userexists = false;
+                userExists = true;
             }
-
-
+             else{
+                userExists = false;
+            }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
 
-        return Userexists;
-
+        return userExists;
     }
+
+
     /**
      *  Add a new restaurant to the database.
      *
