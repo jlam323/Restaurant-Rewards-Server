@@ -189,98 +189,104 @@ public class Dbtest {
 
 
     /**
-     *  Adds points to a given user's account at a given restaurant.
+     *  Gets all the rewards that can be redeemed by points at a particular restaurant.
      *
      *  @param conn connection object
-     *  @param userID ID of the user
-     *  @param restID ID of the restaurant
-     *  @param points number of points to be added to the account
-     *  @return 0 if successfully added points to the account
-     *          1 if unsuccessful - either user or restaurant ID not found
+     *  @param restID ID of the new restaurant
+     *  @return rewards A map of integer point values to the reward name
      */
-    public static int addPoints(Connection conn, int userID, int restID, int points) {
+    public static Map<String,Integer> getRewards(Connection conn, int restID) {
 
-        boolean userExists;
+        // Check if the restaurant exists before adding
         boolean restaurantExists;
-        boolean userPointsExists;
-
-        userExists = findUser(conn, userID);
         restaurantExists = findRestaurant(conn, restID);
 
-        // Check if the user has a point counter with the restaurant
-        userPointsExists = findUserAtRestaurant(conn, restID, userID);
-
-        if (userExists && restaurantExists && userPointsExists) {
-
-            // SQL statement
-            String sql = "UPDATE POINTS SET POINT = POINT + ? WHERE NAMEID = ? AND RESTID = ?";
-
-            // Create prepared statement
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                // Insert values into the prepared statement
-                ps.setInt(1, points);
-                ps.setInt(2, userID);
-                ps.setInt(3, restID);
-
-                // Execute the query
-                ps.executeUpdate();
-
-                System.out.println("Successfully added " + points + " points to user " + userID + " in restaurant " + restID + ".");
-
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-            return 0;
-        } else {
-            return 1;
-        }
-    }
+        // Create map of rewards, each has a point value and description
+        Map<String,Integer> rewards = new HashMap<String,Integer>();
 
 
-    /**
-     *  Subtracts points from a given user's account at a given restaurant from a reward redemption.
-     *
-     *  @param conn connection object
-     *  @param userID ID of the user
-     *  @param restID ID of the restaurant
-     *  @param points number of points to be subtracted from the account
-     *  @return 0 if successfully subtracted points to the account
-     *          1 if unsuccessful - either user or restaurant ID not found
-     */
-    public static int redeemReward(Connection conn, int userID, int restID, int points) {
-
-        boolean userExists;
-        boolean restaurantExists;
-
-        userExists = findUser(conn, userID);
-        restaurantExists = findRestaurant(conn, restID);
-
-        if (userExists && restaurantExists){
+        if (restaurantExists) {
 
             // SQL statement
-            String sql = "UPDATE POINTS SET POINT = POINT - ? WHERE NAMEID = ? AND RESTID = ?";
+            String sql = "SELECT * FROM REWARDS WHERE RESTID = ?";
 
             // Create prepared statement
             try (PreparedStatement ps = conn.prepareStatement(sql))
             {
-                // Insert values into the prepared statement
-                ps.setInt(1, points);
-                ps.setInt(2, userID);
-                ps.setInt(3, restID);
+                // Insert values for the restaurant
+                ps.setInt(1, restID);
 
                 // Execute the query
-                ps.executeUpdate();
+                ResultSet rs = ps.executeQuery();
 
-                System.out.println("Successfully redeemed. Subtracted " + points + " points to user " + userID + " in restaurant " + restID + ".");
+                Integer rewardValue;
+                String rewardText;
+
+                // Read the result of the query. Max of 10 rewards
+                while (rs.next()) {
+
+                    // Read the reward text and value
+                    rewardValue = rs.getInt("REDEMPTION");
+                    rewardText = rs.getString("REWARD");
+
+                    // Add pair of reward text and value into the map
+                    rewards.put(rewardText, rewardValue);
+                }
 
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
             }
-            return 0;
         }
-        else {
-            return 1;
+
+        return rewards;
+    }
+
+
+    /**
+     *  Adds points to a given user's account at a given restaurant.
+     *
+     *  @param conn connection object
+     *  @param userID ID of the user
+     *  @return 0 if successfully added points to the account
+     *          1 if unsuccessful - either user or restaurant ID not found
+     */
+    public static Map<String,Integer> viewAllPoints(Connection conn, int userID) {
+
+        boolean userExists;
+        userExists = findUser(conn, userID);
+
+        Map<String,Integer> points = new HashMap<String,Integer>();
+
+        if (userExists) {
+
+            // SQL statement
+            String sql = "SELECT * FROM POINTS WHERE NAMEID = ?";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                // Insert values into the prepared statement
+                ps.setInt(1, userID);
+
+                // Execute the query
+                ResultSet rs = ps.executeQuery();
+
+                String restID;
+                int pointsAtRestaurant;
+
+                while (rs.next()) {
+                    restID = rs.getString("RESTID");
+                    pointsAtRestaurant = rs.getInt("POINTS");
+
+                    // Insert pair into the map
+                    points.put(restID, pointsAtRestaurant);
+                }
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
         }
+
+        return points;
     }
 
 
@@ -342,11 +348,11 @@ public class Dbtest {
      *
      * @param conn connection object
      * @param restID ID of the restaurant
-     * @param nameID ID of the user
+     * @param userID ID of the user
      * @return true if combination of restid and userid exists
      *         false if combination of restid and userid doesnt exist
      */
-    public static boolean findUserAtRestaurant(Connection conn, int restID, int nameID) {
+    public static boolean findUserAtRestaurant(Connection conn, int restID, int userID) {
 
         boolean userExists = false;
 
@@ -358,7 +364,7 @@ public class Dbtest {
 
             // Insert values for the restaurant
             ps.setInt(1, restID);
-            ps.setInt(2, nameID);
+            ps.setInt(2, userID);
 
             // Execute the query
             ResultSet rs = ps.executeQuery();
@@ -375,6 +381,55 @@ public class Dbtest {
         }
 
         return userExists;
+    }
+
+
+    /**
+     *  Adds points to a given user's account at a given restaurant.
+     *
+     *  @param conn connection object
+     *  @param userID ID of the user
+     *  @param restID ID of the restaurant
+     *  @param points number of points to be added to the account
+     *  @return 0 if successfully added points to the account
+     *          1 if unsuccessful - either user or restaurant ID not found
+     */
+    public static int addPoints(Connection conn, int userID, int restID, int points) {
+
+        boolean userExists;
+        boolean restaurantExists;
+        boolean userPointsExists;
+
+        userExists = findUser(conn, userID);
+        restaurantExists = findRestaurant(conn, restID);
+
+        // Check if the user has a point counter with the restaurant
+        userPointsExists = findUserAtRestaurant(conn, restID, userID);
+
+        if (userExists && restaurantExists && userPointsExists) {
+
+            // SQL statement
+            String sql = "UPDATE POINTS SET POINT = POINT + ? WHERE NAMEID = ? AND RESTID = ?";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                // Insert values into the prepared statement
+                ps.setInt(1, points);
+                ps.setInt(2, userID);
+                ps.setInt(3, restID);
+
+                // Execute the query
+                ps.executeUpdate();
+
+                System.out.println("Successfully added " + points + " points to user " + userID + " in restaurant " + restID + ".");
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return 0;
+        } else {
+            return 1;
+        }
     }
 
 
@@ -427,107 +482,61 @@ public class Dbtest {
 
 
     /**
-     *  Get the point value of a food from a restaurant.
+     *  Get the food list and point values for each for the restaurant app.
      *
      *  @param conn connection object
      *  @param restID ID of the new restaurant
-     *  @param foodID usually 1-8, represents the item on the list of restaurant's menu
-     *  @return foodPoint the point value of the food item. if the item is not found, the value is 0
+     *  @return foodList the list of food objects that contain an ID and point value
      */
-    public static int getFoodPointValue(Connection conn, int restID, int foodID) {
-
-        int foodPoint = 0;
+    public static ArrayList<FoodItem> getFoodInformation(Connection conn, int restID) {
 
         // Check if the restaurant exists before adding
         boolean restaurantExists;
         restaurantExists = findRestaurant(conn, restID);
 
+        // Create an array list to store the food objects
+        ArrayList<FoodItem> foodList = new ArrayList<FoodItem>();
+
+        // Create a food item object to store food information from the database
+        FoodItem food;
 
         if (restaurantExists) {
 
             // SQL statement
-            String sql = "SELECT POINT FROM FOOD WHERE RESTID = ? and FOODID = ?";
+            String sql = "SELECT * FROM FOOD WHERE RESTID = ?";
 
             // Create prepared statement
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
                 // Insert values into the prepared statement
                 ps.setInt(1, restID);
-                ps.setInt(2, foodID);
 
                 // Execute the query
                 ResultSet rs = ps.executeQuery();
+
+
+                int foodValue;
+                String foodID;
 
                 // Read the result of the query
-                if (rs.next()) {
-
-                    // Read the POINT column of the query result
-                    String queryResult = rs.getString("POINT");
-
-                    // Convert string into integer point
-                    foodPoint = Integer.parseInt(queryResult);
-                } else {
-                    System.out.println("Food ID not found.");
-                }
-
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        }
-        return foodPoint;
-    }
-
-
-    /**
-     *  Gets all the rewards that can be redeemed by points at a particular restaurant.
-     *
-     *  @param conn connection object
-     *  @param restID ID of the new restaurant
-     *  @return rewards A map of integer point values to the reward name
-     */
-    public static Map<Integer,String> getRewards(Connection conn, int restID) {
-
-        // Check if the restaurant exists before adding
-        boolean restaurantExists;
-        restaurantExists = findRestaurant(conn, restID);
-
-        // Create map of rewards, each has a point value and description
-        Map<Integer,String> rewards = new HashMap<Integer,String>();
-
-
-        if (restaurantExists) {
-
-            // SQL statement
-            String sql = "SELECT * FROM REWARDS WHERE RESTID = ?";
-
-            // Create prepared statement
-            try (PreparedStatement ps = conn.prepareStatement(sql))
-            {
-                // Insert values for the restaurant
-                ps.setInt(1, restID);
-
-                // Execute the query
-                ResultSet rs = ps.executeQuery();
-
-                String rewardText;
-                Integer rewardValue;
-
-                // Read the result of the query. Max of 10 rewards
                 while (rs.next()) {
 
-                    // Read the reward text and value
-                    rewardText = rs.getString("REWARD");
-                    rewardValue = rs.getInt("REDEMPTION");
+                    // Read the information from the columns
+                    foodValue = rs.getInt("VALUE");
+                    foodID = rs.getString("FOODID");
 
-                    // Add pair of reward text and value into the map
-                    rewards.put(rewardValue, rewardText);
+                    // Create an object with the attributes
+                    food = new FoodItem(foodValue, foodID);
+
+                    // Put food object into the array list
+                    foodList.add(food);
                 }
 
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
             }
         }
-
-        return rewards;
+        return foodList;
     }
 
 
@@ -619,6 +628,97 @@ public class Dbtest {
             return 1;
         }
     }
+
+
+    /**
+     *  Subtracts points from a given user's account at a given restaurant from a reward redemption.
+     *
+     *  @param conn connection object
+     *  @param userID ID of the user
+     *  @param restID ID of the restaurant
+     *  @param points number of points to be subtracted from the account
+     *  @return 0 if successfully subtracted points to the account
+     *          1 if unsuccessful - either user or restaurant ID not found
+     */
+    public static int redeemReward(Connection conn, int userID, int restID, int points) {
+
+        boolean userExists;
+        boolean restaurantExists;
+
+        userExists = findUser(conn, userID);
+        restaurantExists = findRestaurant(conn, restID);
+
+        if (userExists && restaurantExists){
+
+            // SQL statement
+            String sql = "UPDATE POINTS SET POINT = POINT - ? WHERE NAMEID = ? AND RESTID = ?";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql))
+            {
+                // Insert values into the prepared statement
+                ps.setInt(1, points);
+                ps.setInt(2, userID);
+                ps.setInt(3, restID);
+
+                // Execute the query
+                ps.executeUpdate();
+
+                System.out.println("Successfully redeemed. Subtracted " + points + " points to user " + userID + " in restaurant " + restID + ".");
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
+
+    /**
+     *
+     *
+     *  @param conn connection object
+     *  @param restID ID of the new restaurant
+     *  @param rewardID ID of the reward
+     *
+     *  @return 0 if successfully removed the new reward
+     *          1 if unsuccessful. Restaurant or reward does not exist
+     */
+    public static int recordPurchase(Connection conn, int userID, int restID, String foodID) {
+
+        // Check if the restaurant exists before adding
+        boolean restaurantExists;
+        restaurantExists = findRestaurant(conn, restID);
+
+
+        if (restaurantExists) {
+
+            // SQL statement
+            String sql = "DELETE WHERE RESTID = ? AND REWARDID = ? FROM TABLE REWARDS ";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql))
+            {
+                // Insert values
+                ps.setInt(1, restID);
+                ps.setInt(2, rewardID);
+
+                // Execute the update
+                ps.executeUpdate();
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return 0;
+        }
+        else{
+            return 1;
+        }
+    }
+
 }
 
 
