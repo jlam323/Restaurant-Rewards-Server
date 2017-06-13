@@ -678,47 +678,36 @@ public class Dbtest {
 
 
     /**
-     *
-     *
+     *  Records a user's purchase
      *  @param conn connection object
      *  @param restID ID of the new restaurant
-     *  @param rewardID ID of the reward
+     *  @param foodID ID of the reward
      *
-     *  @return 0 if successfully removed the new reward
-     *          1 if unsuccessful. Restaurant or reward does not exist
      */
-    public static int recordPurchase(Connection conn, int userID, int restID, String foodID) {
+    public static int recordPurchase(Connection conn, int userID, int restID, int points ,String foodID) {
+        addPoints(conn,userID,restID,points);
+        String sql = "INSERT INTO PURCHASE_HISTORY(NAMEID, RESTID, , FOODID) VALUES(?,?,?)";
 
-        // Check if the restaurant exists before adding
-        boolean restaurantExists;
-        restaurantExists = findRestaurant(conn, restID);
+        // Create prepared statement
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            // Insert values for the user
+            ps.setInt(1, userID);
+            ps.setInt(2, restID);
+            ps.setString(3, foodID);
 
+            // Execute the prepared statement
+            ps.executeUpdate();
 
-        if (restaurantExists) {
-
-            // SQL statement
-            String sql = "DELETE WHERE RESTID = ? AND REWARDID = ? FROM TABLE REWARDS ";
-
-            // Create prepared statement
-            try (PreparedStatement ps = conn.prepareStatement(sql))
-            {
-                // Insert values
-                ps.setInt(1, restID);
-                ps.setInt(2, rewardID);
-
-                // Execute the update
-                ps.executeUpdate();
-
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
+        }
+            catch (SQLException e) {
+            System.out.println(e.getMessage());
             }
+
+        // Successfully added the user
             return 0;
-        }
-        else{
-            return 1;
-        }
+         }
     }
 
-}
+
 
 
