@@ -433,6 +433,7 @@ public class Dbtest {
         return foodPoint;
     }
 
+
     /**
      *  Gets all the rewards that can be redeemed by points at a particular restaurant.
      *
@@ -484,6 +485,96 @@ public class Dbtest {
         }
 
         return rewards;
+    }
+
+
+    /**
+     *  Adds a reward option to the restaurant's list of rewards.
+     *
+     *  @param conn connection object
+     *  @param restID ID of the new restaurant
+     *  @param rewardText text description of the reward
+     *  @param rewardValue number of points that the reward is worth
+     *  @param rewardID ID of the reward
+     *
+     *  @return 0 if successfully added the new reward
+     *          1 if unsuccessful. Reward already exists
+     */
+    public static int addReward(Connection conn, int restID, String rewardText, int rewardValue, int rewardID) {
+
+        // Check if the restaurant exists before adding
+        boolean restaurantExists;
+        restaurantExists = findRestaurant(conn, restID);
+
+
+        if (restaurantExists) {
+
+            // SQL statement
+            String sql = "INSERT INTO REWARDS (REWARDSID, RESTID, REWARD, REDEMPTION) VALUES (?,?,?,?)";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql))
+            {
+                // Insert values
+                ps.setInt(1, rewardID);
+                ps.setInt(2, restID);
+                ps.setString(3, rewardText);
+                ps.setInt(4, rewardValue);
+
+                // Execute the update
+                ps.executeUpdate();
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return 0;
+        }
+        else{
+            return 1;
+        }
+    }
+
+
+    /**
+     *  Removes a reward option to the restaurant's list of rewards.
+     *
+     *  @param conn connection object
+     *  @param restID ID of the new restaurant
+     *  @param rewardID ID of the reward
+     *
+     *  @return 0 if successfully removed the new reward
+     *          1 if unsuccessful. Restaurant or reward does not exist
+     */
+    public static int removeReward(Connection conn, int restID, int rewardID) {
+
+        // Check if the restaurant exists before adding
+        boolean restaurantExists;
+        restaurantExists = findRestaurant(conn, restID);
+
+
+        if (restaurantExists) {
+
+            // SQL statement
+            String sql = "DELETE WHERE RESTID = ? AND REWARDID = ? FROM TABLE REWARDS ";
+
+            // Create prepared statement
+            try (PreparedStatement ps = conn.prepareStatement(sql))
+            {
+                // Insert values
+                ps.setInt(1, restID);
+                ps.setInt(2, rewardID);
+
+                // Execute the update
+                ps.executeUpdate();
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return 0;
+        }
+        else{
+            return 1;
+        }
     }
 }
 
