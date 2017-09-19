@@ -1,35 +1,14 @@
-import java.io.*;
+package com.trybe;
+
 import java.sql.*;
 import java.util.*;
 
-public class Dbtest {
+public class DatabaseManager {
 
+    private Connection conn;
 
-    public static void main (String[] args) throws IOException {
-        // Create connection object
-        Connection conn;
-        conn = connect();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-
-        /* TEST TO ADD USER*/
-        int userID;
-        System.out.println("Enter user ID");
-        userID = Integer.parseInt(br.readLine());
-
-        addUser(conn, userID, "JLam", "M");
-
-        System.out.println("Enter a user ID to be searched");
-        userID = Integer.parseInt(br.readLine());
-
-        findUser(conn, userID);
-        /* END TEST */
-
-
-
-        // Close the connection
-        disconnect(conn);
+    public DatabaseManager(){
+        connect();
     }
 
 
@@ -38,17 +17,10 @@ public class Dbtest {
      ************************************************************/
 
     /**
-     *  Establishes a connection to the local SQLite database
-     *
-     *  @return connection object to the database
+     *  Establishes a connection to the local SQLite database.
      */
-    private static Connection connect() {
-
-        // Create connection object
-        Connection conn = null;
-
+    private void connect() {
         try {
-
             // Database location and connection string
             String dbLocation = "sqlite/db/TRYBE.DB";
             String url = "jdbc:sqlite:" + dbLocation;
@@ -57,20 +29,15 @@ public class Dbtest {
 
             // Connection confirmation
             System.out.println("Connection to SQLITE db is successful.");
-
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        return conn;
     }
-
 
     /**
      *  Receives the connection object and closes the connection
-     *
-     *  @param conn connection object
      */
-    private static void disconnect(Connection conn){
+    private void disconnect(){
         try {
             if (conn != null) {
                 conn.close();
@@ -82,20 +49,19 @@ public class Dbtest {
     }
 
 
+
     /************************************************************
      *           USER RELATED DATABASE FUNCTIONS
      ************************************************************/
 
-
     /**
      *  Find a user in the database.
      *
-     *  @param conn connection object
      *  @param userID ID of the new user
      *  @return true if the user is in the database
      *          false if the user is not in the database
      */
-    public static boolean findUser(Connection conn, int userID) {
+    public boolean findUser(int userID) {
 
         boolean userExists = false;
 
@@ -130,9 +96,10 @@ public class Dbtest {
                 System.out.println("User " + userID + " does not exist in the database.");
                 userExists = false;
             }
-
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+        } finally {
+            disconnect();
         }
 
         return userExists;
@@ -142,24 +109,23 @@ public class Dbtest {
     /**
      *  Add a new user to the database.
      *
-     *  @param conn connection object
      *  @param userID ID of the new user
      *  @param name user's first and last name
      *  @param gender user's gender (M/F/O)
-     *  @return 0 if successfully added user to the database
-     *          1 if unsuccessful, the user already exists
+     *  @return true if successfully added user to the database
+     *          false if unsuccessful, the user already exists
      */
-    public static int addUser(Connection conn, int userID, String name, String gender) {
+    public boolean addUser(int userID, String name, String gender) {
 
         // Check if the user exists before adding
         boolean userExists;
-        userExists = findUser(conn, userID);
+        userExists = findUser(userID);
 
         if (userExists) {
             System.out.println("Found user: " + userID + " - " + name + ".");
             System.out.println("Unable to add user.");
             // Unsuccessful in adding user because they already exist
-            return 1;
+            return false;
         }
 
 
@@ -181,25 +147,26 @@ public class Dbtest {
             System.out.println("Successfully added user: " + userID + " - " + name + ".");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+        } finally {
+            disconnect();
         }
 
         // Successfully added the user
-        return 0;
+        return true;
     }
 
 
     /**
      *  Gets all the rewards that can be redeemed by points at a particular restaurant.
      *
-     *  @param conn connection object
      *  @param restID ID of the new restaurant
      *  @return rewards A map of integer point values to the reward name
      */
-    public static Map<String,Integer> getRewards(Connection conn, int restID) {
+    public Map<String,Integer> getRewards(int restID) {
 
         // Check if the restaurant exists before adding
         boolean restaurantExists;
-        restaurantExists = findRestaurant(conn, restID);
+        restaurantExists = findRestaurant(restID);
 
         // Create map of rewards, each has a point value and description
         Map<String,Integer> rewards = new HashMap<String,Integer>();
@@ -232,9 +199,10 @@ public class Dbtest {
                     // Add pair of reward text and value into the map
                     rewards.put(rewardText, rewardValue);
                 }
-
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
+            } finally {
+                disconnect();
             }
         }
 
@@ -243,17 +211,15 @@ public class Dbtest {
 
 
     /**
-     *  Adds points to a given user's account at a given restaurant.
+     *  Retrieves all the points that the user owns at all restaurants.
      *
-     *  @param conn connection object
      *  @param userID ID of the user
-     *  @return 0 if successfully added points to the account
-     *          1 if unsuccessful - either user or restaurant ID not found
+     *  @return points A map of points to restaurants
      */
-    public static Map<String,Integer> viewAllPoints(Connection conn, int userID) {
+    public Map<String,Integer> viewAllPoints(int userID) {
 
         boolean userExists;
-        userExists = findUser(conn, userID);
+        userExists = findUser(userID);
 
         Map<String,Integer> points = new HashMap<String,Integer>();
 
@@ -283,6 +249,8 @@ public class Dbtest {
                 }
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
+            } finally {
+                disconnect();
             }
         }
 
@@ -298,12 +266,11 @@ public class Dbtest {
     /**
      *  Find a restaurant in the database.
      *
-     *  @param conn connection object
      *  @param restID ID of the new restaurant
      *  @return true if the restaurant is in the database
      *          false if the restaurant is no in the database
      */
-    public static boolean findRestaurant(Connection conn, int restID) {
+    public boolean findRestaurant(int restID) {
 
         boolean restaurantExists = false;
 
@@ -335,9 +302,10 @@ public class Dbtest {
                 System.out.println("Restaurant " + restID + " does not exist in the database.");
                 restaurantExists = false;
             }
-
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+        } finally {
+            disconnect();
         }
 
         return restaurantExists;
@@ -346,13 +314,12 @@ public class Dbtest {
 
     /** Find if a restaurant and user exists in rewards table
      *
-     * @param conn connection object
      * @param restID ID of the restaurant
      * @param userID ID of the user
      * @return true if combination of restid and userid exists
      *         false if combination of restid and userid doesnt exist
      */
-    public static boolean findUserAtRestaurant(Connection conn, int restID, int userID) {
+    public boolean findUserAtRestaurant(int restID, int userID) {
 
         boolean userExists = false;
 
@@ -373,11 +340,13 @@ public class Dbtest {
             if (rs.next()) {
                 userExists = true;
             }
-             else{
+            else{
                 userExists = false;
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+        } finally {
+            disconnect();
         }
 
         return userExists;
@@ -385,26 +354,25 @@ public class Dbtest {
 
 
     /**
-     *  Adds points to a given user's account at a given restaurant.
+     *  Adds points to a given user's account at a given restaurant. Invoked by recordPurchase method.
      *
-     *  @param conn connection object
      *  @param userID ID of the user
      *  @param restID ID of the restaurant
      *  @param points number of points to be added to the account
-     *  @return 0 if successfully added points to the account
-     *          1 if unsuccessful - either user or restaurant ID not found
+     *  @return true if successfully added points to the account
+     *          false if unsuccessful - either user or restaurant ID not found
      */
-    public static int addPoints(Connection conn, int userID, int restID, int points) {
+    private boolean addPoints(int userID, int restID, int points) {
 
         boolean userExists;
         boolean restaurantExists;
         boolean userPointsExists;
 
-        userExists = findUser(conn, userID);
-        restaurantExists = findRestaurant(conn, restID);
+        userExists = findUser(userID);
+        restaurantExists = findRestaurant(restID);
 
         // Check if the user has a point counter with the restaurant
-        userPointsExists = findUserAtRestaurant(conn, restID, userID);
+        userPointsExists = findUserAtRestaurant(restID, userID);
 
         if (userExists && restaurantExists && userPointsExists) {
 
@@ -425,35 +393,37 @@ public class Dbtest {
 
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
+            } finally {
+                disconnect();
             }
-            return 0;
-        } else {
-            return 1;
+
+            return true;
         }
+        else
+            return false;
     }
 
 
     /**
      *  Add a new restaurant to the database.
      *
-     *  @param conn connection object
      *  @param restID ID of the new restaurant
      *  @param name restaurant's name
-     *  @param rewardsID ID of the restaurant's rewards list
-     *  @return 0 if successfully added restaurant to the database
-     *          1 if unsuccessful, the restaurant is already in the database
+     *  @param rewardID ID of the restaurant's rewards list
+     *  @return true if successfully added restaurant to the database
+     *          false if unsuccessful, the restaurant is already in the database
      */
-    public static int addRestaurant(Connection conn, int restID, String name, int rewardsID) {
+    public boolean addRestaurant(int restID, String name, int rewardID) {
 
         // Check if the restaurant exists before adding
         boolean restaurantExists;
-        restaurantExists = findRestaurant(conn, restID);
+        restaurantExists = findRestaurant(restID);
 
         if (restaurantExists) {
             System.out.println("Found restaurant: " + restID + " - " + name + ".");
             System.out.println("Unable to add restaurant.");
             // Unsuccessful in adding restaurant because they already exist
-            return 1;
+            return false;
         }
 
 
@@ -466,7 +436,7 @@ public class Dbtest {
             // Insert values for the user
             ps.setInt(1, restID);
             ps.setString(2, name);
-            ps.setInt(3, rewardsID);
+            ps.setInt(3, rewardID);
 
             // Execute the prepared statement
             ps.executeUpdate();
@@ -474,25 +444,26 @@ public class Dbtest {
             System.out.println("Successfully added restaurant: " + restID + " - " + name + ".");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+        } finally {
+            disconnect();
         }
 
         // Successfully added the restaurant
-        return 0;
+        return true;
     }
 
 
     /**
      *  Get the food list and point values for each for the restaurant app.
      *
-     *  @param conn connection object
      *  @param restID ID of the new restaurant
      *  @return foodList the list of food objects that contain an ID and point value
      */
-    public static ArrayList<FoodItem> getFoodInformation(Connection conn, int restID) {
+    public ArrayList<FoodItem> getFoodInformation(int restID) {
 
         // Check if the restaurant exists before adding
         boolean restaurantExists;
-        restaurantExists = findRestaurant(conn, restID);
+        restaurantExists = findRestaurant(restID);
 
         // Create an array list to store the food objects
         ArrayList<FoodItem> foodList = new ArrayList<FoodItem>();
@@ -534,6 +505,8 @@ public class Dbtest {
 
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
+            } finally {
+                disconnect();
             }
         }
         return foodList;
@@ -543,20 +516,19 @@ public class Dbtest {
     /**
      *  Adds a reward option to the restaurant's list of rewards.
      *
-     *  @param conn connection object
      *  @param restID ID of the new restaurant
      *  @param rewardText text description of the reward
      *  @param rewardValue number of points that the reward is worth
      *  @param rewardID ID of the reward
      *
-     *  @return 0 if successfully added the new reward
-     *          1 if unsuccessful. Reward already exists
+     *  @return true if successfully added the new reward
+     *          false if unsuccessful. Reward already exists
      */
-    public static int addReward(Connection conn, int restID, String rewardText, int rewardValue, int rewardID) {
+    public boolean addReward(int restID, String rewardText, int rewardValue, int rewardID) {
 
         // Check if the restaurant exists before adding
         boolean restaurantExists;
-        restaurantExists = findRestaurant(conn, restID);
+        restaurantExists = findRestaurant(restID);
 
 
         if (restaurantExists) {
@@ -578,30 +550,30 @@ public class Dbtest {
 
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
+            } finally {
+                disconnect();
             }
-            return 0;
+            return true;
         }
-        else{
-            return 1;
-        }
+        else
+            return false;
     }
 
 
     /**
      *  Removes a reward option to the restaurant's list of rewards.
      *
-     *  @param conn connection object
      *  @param restID ID of the new restaurant
      *  @param rewardID ID of the reward
      *
-     *  @return 0 if successfully removed the new reward
-     *          1 if unsuccessful. Restaurant or reward does not exist
+     *  @return true if successfully removed the new reward
+     *          false if unsuccessful. Restaurant or reward does not exist
      */
-    public static int removeReward(Connection conn, int restID, int rewardID) {
+    public boolean removeReward(int restID, int rewardID) {
 
         // Check if the restaurant exists before adding
         boolean restaurantExists;
-        restaurantExists = findRestaurant(conn, restID);
+        restaurantExists = findRestaurant(restID);
 
 
         if (restaurantExists) {
@@ -621,32 +593,33 @@ public class Dbtest {
 
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
+            } finally {
+                disconnect();
             }
-            return 0;
+            return true;
         }
-        else{
-            return 1;
-        }
+        else
+            return false;
+
     }
 
 
     /**
      *  Subtracts points from a given user's account at a given restaurant from a reward redemption.
      *
-     *  @param conn connection object
      *  @param userID ID of the user
      *  @param restID ID of the restaurant
      *  @param points number of points to be subtracted from the account
-     *  @return 0 if successfully subtracted points to the account
-     *          1 if unsuccessful - either user or restaurant ID not found
+     *  @return true if successfully subtracted points to the account
+     *          false if unsuccessful - either user or restaurant ID not found
      */
-    public static int redeemReward(Connection conn, int userID, int restID, int points) {
+    public boolean redeemReward(int userID, int restID, int points) {
 
         boolean userExists;
         boolean restaurantExists;
 
-        userExists = findUser(conn, userID);
-        restaurantExists = findRestaurant(conn, restID);
+        userExists = findUser(userID);
+        restaurantExists = findRestaurant(restID);
 
         if (userExists && restaurantExists){
 
@@ -668,24 +641,26 @@ public class Dbtest {
 
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
+            } finally {
+                disconnect();
             }
-            return 0;
+            return true;
         }
-        else {
-            return 1;
-        }
+        else
+            return false;
+
     }
 
 
     /**
      *  Records a user's purchase
-     *  @param conn connection object
+     *
      *  @param restID ID of the new restaurant
      *  @param foodID ID of the reward
      *
      */
-    public static int recordPurchase(Connection conn, int userID, int restID, int points ,String foodID) {
-        addPoints(conn,userID,restID,points);
+    public boolean recordPurchase(int userID, int restID, int points, String foodID) {
+        addPoints(userID, restID, points);
         String sql = "INSERT INTO PURCHASE_HISTORY(NAMEID, RESTID, , FOODID) VALUES(?,?,?)";
 
         // Create prepared statement
@@ -698,16 +673,50 @@ public class Dbtest {
             // Execute the prepared statement
             ps.executeUpdate();
 
-        }
-            catch (SQLException e) {
+        } catch (SQLException e) {
             System.out.println(e.getMessage());
-            }
+        } finally {
+            disconnect();
+        }
 
         // Successfully added the user
-            return 0;
-         }
+        return true;
     }
 
+
+
+
+
+
+    /*
+    public static void main (String[] args) throws IOException {
+        // Create connection object
+        Connection conn;
+        conn = connect();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+
+        // TEST TO ADD USER
+        int userID;
+        System.out.println("Enter user ID");
+        userID = Integer.parseInt(br.readLine());
+
+        addUser(conn, userID, "JLam", "M");
+
+        System.out.println("Enter a user ID to be searched");
+        userID = Integer.parseInt(br.readLine());
+
+        findUser(conn, userID);
+        // END TEST
+
+
+
+        // Close the connection
+        disconnect(conn);
+    }
+    */
+}
 
 
 

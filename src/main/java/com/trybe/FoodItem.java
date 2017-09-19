@@ -1,3 +1,5 @@
+package com.trybe;
+
 public class FoodItem {
 
     String foodID;
