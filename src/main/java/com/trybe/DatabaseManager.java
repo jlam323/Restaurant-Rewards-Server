@@ -3,11 +3,12 @@ package com.trybe;
 import java.sql.*;
 import java.util.*;
 
+
 public class DatabaseManager {
 
     private Connection conn;
 
-    public DatabaseManager(){
+    public DatabaseManager() throws ClassNotFoundException{
         connect();
     }
 
@@ -19,10 +20,14 @@ public class DatabaseManager {
     /**
      *  Establishes a connection to the local SQLite database.
      */
-    private void connect() {
+    private void connect() throws ClassNotFoundException{
+
+        // load the sqlite-JDBC driver using the current class loader
+        Class.forName("org.sqlite.JDBC");
+
         try {
             // Database location and connection string
-            String dbLocation = "sqlite/db/TRYBE.DB";
+            String dbLocation = "sqlite/db/TRYBE.db";
             String url = "jdbc:sqlite:" + dbLocation;
 
             conn = DriverManager.getConnection(url);
@@ -37,7 +42,7 @@ public class DatabaseManager {
     /**
      *  Receives the connection object and closes the connection
      */
-    private void disconnect(){
+    public void disconnect(){
         try {
             if (conn != null) {
                 conn.close();
@@ -87,7 +92,7 @@ public class DatabaseManager {
                 //System.out.println("Query result: " + queryResult);
 
                 // Record whether or not the user is already in the database
-                if (!queryResult.equals(userID + "")){
+                if (queryResult.equals(userID + "")){
                     System.out.println("User " + userID + " exists in the database already.");
                     userExists = true;
                 }
@@ -98,8 +103,6 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-        } finally {
-            disconnect();
         }
 
         return userExists;
@@ -293,7 +296,7 @@ public class DatabaseManager {
                 String queryResult = rs.getString("RESTID");
 
                 // Record whether or not the restaurant is already in the database
-                if (!queryResult.equals(restID + "")){
+                if (queryResult.equals(restID + "")){
                     System.out.println("Restaurant " + restID + " exists in the database already.");
                     restaurantExists = true;
                 }
@@ -304,8 +307,6 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-        } finally {
-            disconnect();
         }
 
         return restaurantExists;
@@ -660,7 +661,13 @@ public class DatabaseManager {
      *
      */
     public boolean recordPurchase(int userID, int restID, int points, String foodID) {
-        addPoints(userID, restID, points);
+        boolean added = addPoints(userID, restID, points);
+
+        if (!added){
+            //TODO: throw some error or do something
+            System.out.println("[recordPurchase] there was an error adding points");
+        }
+
         String sql = "INSERT INTO PURCHASE_HISTORY(NAMEID, RESTID, , FOODID) VALUES(?,?,?)";
 
         // Create prepared statement

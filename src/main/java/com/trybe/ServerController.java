@@ -58,11 +58,13 @@ public class ServerController {
 
 
     // TODO: I feel like this shouldn't be its own endpoint... implement some login security thing in the future
+    // TODO: also, remove the database disconnect when we add login
     @RequestMapping(value="/client/finduser/{userID}")
     @ResponseBody
-    public ResponseEntity<Boolean> findUser(@PathVariable int userID){
+    public ResponseEntity<Boolean> findUser(@PathVariable int userID) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean found = dbm.findUser(userID);
+        dbm.disconnect();
 
         if (found)
             return ResponseEntity.status(200).body(true);
@@ -75,7 +77,7 @@ public class ServerController {
     @RequestMapping(value="/client/adduser/{userID}/{name}/{gender}")
     @ResponseBody
     public ResponseEntity<Boolean> addUser(@PathVariable int userID, @PathVariable String name,
-                                           @PathVariable String gender){
+                                           @PathVariable String gender) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean addedNewUser = dbm.addUser(userID, name, gender);
 
@@ -88,7 +90,7 @@ public class ServerController {
 
     @RequestMapping(value="/client/getrewards/{restID}", produces="application/json")
     @ResponseBody
-    public ResponseEntity<String> getRewards(@PathVariable int restID){
+    public ResponseEntity<String> getRewards(@PathVariable int restID) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         Map<String,Integer> rewards = dbm.getRewards(restID);
 
@@ -101,7 +103,7 @@ public class ServerController {
 
     @RequestMapping(value="/client/viewallpoints/{userID}", produces="application/json")
     @ResponseBody
-    public ResponseEntity<String> viewAllPoints(@PathVariable int userID){
+    public ResponseEntity<String> viewAllPoints(@PathVariable int userID) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         Map<String,Integer> points = dbm.viewAllPoints(userID);
 
@@ -113,11 +115,13 @@ public class ServerController {
 
 
     // TODO: I feel like this shouldn't be its own endpoint... implement some login security thing in the future
+    // TODO: also, remove the database disconnect when we add login
     @RequestMapping(value="/restaurant/findrestaurant/{restID}")
     @ResponseBody
-    public ResponseEntity<Boolean> findRestaurant(@PathVariable int restID){
+    public ResponseEntity<Boolean> findRestaurant(@PathVariable int restID) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean found = dbm.findRestaurant(restID);
+        dbm.disconnect();
 
         if (found)
             return ResponseEntity.status(200).body(true);
@@ -128,7 +132,8 @@ public class ServerController {
 
     @RequestMapping(value="/restaurant/finduseratrestaurant/{userID}/{restID}")
     @ResponseBody
-    public ResponseEntity<Boolean> findUserAtRestaurant(@PathVariable int userID, @PathVariable int restID){
+    public ResponseEntity<Boolean> findUserAtRestaurant(@PathVariable int userID, @PathVariable int restID) throws
+            ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean found = dbm.findUserAtRestaurant(userID, restID);
 
@@ -142,7 +147,7 @@ public class ServerController {
     @RequestMapping(value="/restaurant/addrestaurant/{restID}/{name}/{rewardID}")
     @ResponseBody
     public ResponseEntity<Boolean> addRestaurant(@PathVariable int restID, @PathVariable String name,
-                                                 @PathVariable int rewardID){
+                                                 @PathVariable int rewardID) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean addedRestaurant = dbm.addRestaurant(restID, name, rewardID);
 
@@ -155,7 +160,7 @@ public class ServerController {
 
     @RequestMapping(value="/restaurant/getfoodinformation/{restID}")
     @ResponseBody
-    public ResponseEntity<String> getFoodInformation(@PathVariable int restID){
+    public ResponseEntity<String> getFoodInformation(@PathVariable int restID) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         ArrayList<FoodItem> foodList = dbm.getFoodInformation(restID);
 
@@ -169,7 +174,8 @@ public class ServerController {
     @RequestMapping(value="/restaurant/addreward/{restID}/{rewardText}/{rewardValue}/{rewardID}")
     @ResponseBody
     public ResponseEntity<Boolean> addReward(@PathVariable int restID, @PathVariable String rewardText,
-                                             @PathVariable int rewardValue, @PathVariable int rewardID){
+                                             @PathVariable int rewardValue, @PathVariable int rewardID) throws
+            ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean addedReward = dbm.addReward(restID, rewardText, rewardValue, rewardID);
 
@@ -182,7 +188,8 @@ public class ServerController {
 
     @RequestMapping(value="/restaurant/removereward/{restID}/{rewardID}")
     @ResponseBody
-    public ResponseEntity<Boolean> removeReward(@PathVariable int restID, @PathVariable int rewardID){
+    public ResponseEntity<Boolean> removeReward(@PathVariable int restID, @PathVariable int rewardID) throws
+            ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean removedReward = dbm.removeReward(restID, rewardID);
 
@@ -196,7 +203,7 @@ public class ServerController {
     @RequestMapping(value="/restaurant/redeemreward/{userID}/{restID}/{points}")
     @ResponseBody
     public ResponseEntity<Boolean> redeemReward(@PathVariable int userID, @PathVariable int restID,
-                                                @PathVariable int points){
+                                                @PathVariable int points) throws ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean removedReward = dbm.redeemReward(userID, restID, points);
 
@@ -210,7 +217,8 @@ public class ServerController {
     @RequestMapping(value="/restaurant/recordPurchase/{userID}/{restID}/points/{foodID}")
     @ResponseBody
     public ResponseEntity<Boolean> recordPurchase(@PathVariable int userID, @PathVariable int restID,
-                                                @PathVariable int points, @PathVariable String foodID){
+                                                @PathVariable int points, @PathVariable String foodID) throws
+            ClassNotFoundException{
         DatabaseManager dbm = new DatabaseManager();
         boolean recorded = dbm.recordPurchase(userID, restID, points, foodID);
 
