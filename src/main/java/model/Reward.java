@@ -20,7 +20,7 @@ public class Reward {
 
     @Expose
     @Column(name = "points_cost")
-    private String pointsCost;
+    private int pointsCost;
 
     @Expose
     @Column(name="create_date")
@@ -39,7 +39,7 @@ public class Reward {
 
     public Reward() { }
 
-    public Reward(String id, String text, String pointsCost, Restaurant restaurant, Date createDate, Date lastUpdated) {
+    public Reward(String id, String text, int pointsCost, Restaurant restaurant, Date createDate, Date lastUpdated) {
         this.id = id;
         this.text = text;
         this.pointsCost = pointsCost;
@@ -64,11 +64,11 @@ public class Reward {
         this.text = text;
     }
 
-    public String getPointsCost() {
+    public int getPointsCost() {
         return pointsCost;
     }
 
-    public void setPointsCost(String pointsCost) {
+    public void setPointsCost(int pointsCost) {
         this.pointsCost = pointsCost;
     }
 

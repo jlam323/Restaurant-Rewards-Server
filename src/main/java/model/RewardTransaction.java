@@ -20,7 +20,7 @@ public class RewardTransaction {
 
     @Expose
     @Column(name="points_cost")
-    private String pointsCost;
+    private int pointsCost;
 
     @Expose
     @Column(name="create_date")
@@ -40,7 +40,7 @@ public class RewardTransaction {
 
     public RewardTransaction(){}
 
-    public RewardTransaction(String id, Date date, String pointsCost, Customer customer, Date createDate,
+    public RewardTransaction(String id, Date date, int pointsCost, Customer customer, Date createDate,
                              Date lastUpdated) {
         this.id = id;
         this.date = date;
@@ -66,11 +66,11 @@ public class RewardTransaction {
         this.date = date;
     }
 
-    public String getPointsCost() {
+    public int getPointsCost() {
         return pointsCost;
     }
 
-    public void setPointsCost(String pointsCost) {
+    public void setPointsCost(int pointsCost) {
         this.pointsCost = pointsCost;
     }
 
