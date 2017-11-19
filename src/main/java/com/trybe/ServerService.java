@@ -190,7 +190,7 @@ public class ServerService {
 
     public void saveRewardTransaction(String id, Date date, int pointsCost, Customer customer, Date createDate,
                                       Date lastUpdated){
-        RewardTransaction rt = new RewardTransaction((id, date, pointsCost, customer, createDate, lastUpdated));
+        RewardTransaction rt = new RewardTransaction(id, date, pointsCost, customer, createDate, lastUpdated);
         rewardTransactionRepository.save(rt);
     }
 
