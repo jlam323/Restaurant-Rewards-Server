@@ -44,13 +44,12 @@ public class ServerService {
         return convertToJson("Successfully created customer ID: " + id);
     }
 
-    public String createPoints(String custId, String id, int amount){
+    public String createPoints(Customer customer, String id, int amount){
         if(pointsRepository.exists(id))
             return convertToJson("Error creating points: " + id + " already exists.");
-        else if(!customerRepository.exists(custId))
-            return convertToJson("Error creating points, customer " + custId + " doesn't exist.");
+        else if(!customerRepository.exists(customer.getId()))
+            return convertToJson("Error creating points, customer " + customer.getId() + " doesn't exist.");
         else {
-            Customer customer = customerRepository.findOne(custId);
             savePoints(id, amount, customer, getDate(), getDate());
             return convertToJson("Successfully created customer ID: " + id);
         }
@@ -64,40 +63,36 @@ public class ServerService {
         return convertToJson("Successfully created restaurant ID: " + id);
     }
 
-    public String createReward(String restId, String id, String text, int pointsCost){
+    public String createReward(Restaurant restaurant, String id, String text, int pointsCost){
         if(rewardRepository.exists(id))
             return convertToJson("Error creating reward: " + id + " already exists.");
-        else if(!restaurantRepository.exists(restId))
-            return convertToJson("Error creating reward, restaurant " + restId + " doesn't exist.");
+        else if(!restaurantRepository.exists(restaurant.getId()))
+            return convertToJson("Error creating reward, restaurant " + restaurant.getId() + " doesn't exist.");
         else {
-            Restaurant restaurant = restaurantRepository.findOne(restId);
             saveReward(id, text, pointsCost, restaurant, getDate(), getDate());
             return convertToJson("Successfully created reward ID: " + id);
         }
     }
 
-    public String createRewardTransaction(String custId, String id, Date date, int pointsCost){
+    public String createRewardTransaction(Customer customer, String id, Date date, int pointsCost){
         if(rewardTransactionRepository.exists(id))
             return convertToJson("Error creating reward transaction: " + id + " already exists.");
-        else if(!customerRepository.exists(custId))
-            return convertToJson("Error creating reward transaction, customer " + custId + " doesn't exist.");
+        else if(!customerRepository.exists(customer.getId()))
+            return convertToJson("Error creating reward transaction, customer " + customer.getId() + " doesn't exist.");
         else {
-            Customer customer = customerRepository.findOne(custId);
             saveRewardTransaction(id, date, pointsCost, customer, getDate(), getDate());
             return convertToJson("Successfully created reward transaction ID: " + id);
         }
     }
 
-    public String createTransaction(String custId, String restId, String id, Date date, double amount){
+    public String createTransaction(Customer customer, Restaurant restaurant, String id, Date date, double amount){
         if(transactionRepository.exists(id))
             return convertToJson("Error creating transaction: " + id + " already exists.");
-        else if(!customerRepository.exists(custId))
-            return convertToJson("Error creating transaction, customer " + custId + " doesn't exist.");
-        else if(!restaurantRepository.exists(restId))
-            return convertToJson("Error creating transaction, restaurant " + restId + " doesn't exist.");
+        else if(!customerRepository.exists(customer.getId()))
+            return convertToJson("Error creating transaction, customer " + customer.getId() + " doesn't exist.");
+        else if(!restaurantRepository.exists(restaurant.getId()))
+            return convertToJson("Error creating transaction, restaurant " + restaurant.getId() + " doesn't exist.");
         else{
-            Customer customer = customerRepository.findOne(custId);
-            Restaurant restaurant = restaurantRepository.findOne(restId);
             saveTransaction(id, date, amount, customer, restaurant, getDate(), getDate());
             return convertToJson("Successfully created transaction ID: " + id);
         }
@@ -274,6 +269,16 @@ public class ServerService {
         return convertToJson(SUCCESS);
     }
 
+
+
+
+    //----------OTHER FUNCTIONS----------//
+    /*TODO:
+        -retrieve points of a customer (at all restaurants)
+        -retrieve points of a customer at a specific restaurant
+        -retrieve restaurant list of customers (means adjusting the data model to have restaurants own customers)
+        -
+     */
 
 
 

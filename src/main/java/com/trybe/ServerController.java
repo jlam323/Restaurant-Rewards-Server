@@ -1,8 +1,5 @@
 package com.trybe;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
